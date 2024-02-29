@@ -5,6 +5,8 @@ const Signup = lazy(() => import("views/SignUp"))
 const Dashboard = lazy(() => import("views/Dashboard"))
 const Profile = lazy(() => import("views/Profile"))
 const Blog = lazy(() => import("views/Blog"))
+const BlogView = lazy(() => import("views/BlogView"))
+const BlogCreate = lazy(() => import("views/BlogCreate"))
 
 export const privateRoutes = [
   {
@@ -21,6 +23,16 @@ export const privateRoutes = [
     title: "blog",
     path: "/blog",
     element: Blog,
+  },
+  {
+    title: "blog",
+    path: "/blog/:id",
+    element: BlogView,
+  },
+  {
+    title: "blog",
+    path: "/blog/create",
+    element: BlogCreate,
   },
 ]
 export const publicRoutes = [

@@ -2,13 +2,15 @@ import Button from "component/button/Button"
 import Input from "component/input/Input"
 import { ErrorMessage, Form, Formik } from "formik"
 import { Card, Container, FormError, H2 } from "../globalStyle"
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import * as yup from "yup"
 import { toast } from "react-toastify"
 import { setUser } from "store/actions/auth"
 import { useDispatch, useSelector } from "react-redux"
-import { ExistUser } from "utils"
+import { urlToObject } from "utils"
+import { ApiPost } from "api"
+import dummy from "assets/dummy.png"
 
 const schema = yup.object().shape({
   firstName: yup.string().min(3).required("first name is Required Field"),
@@ -22,18 +24,36 @@ const schema = yup.object().shape({
 const SignUp = () => {
   const dispatch = useDispatch()
   const users = useSelector((state) => state.AuthReducer.users)
+  const [Image, seImage] = useState(null)
   const navigate = useNavigate("/")
-  const handleSubmit = (value) => {
-    if (ExistUser(users, value)) return toast("user already exist")
-    try {
-      localStorage.setItem("users", JSON.stringify([value, ...users]))
-      dispatch(setUser(value))
-      toast("user created successfully")
-      navigate("/")
-    } catch (error) {
-      toast("error occurred")
-    }
+  const handleSubmit = ({
+    firstName,
+    lastName,
+    city,
+    phone,
+    Email,
+    newPassword,
+  }) => {
+    let data = new FormData()
+    data.append("first_name", firstName)
+    data.append("last_name", lastName)
+    data.append("city", city)
+    data.append("phone", phone)
+    data.append("email", Email)
+    data.append("profile_image", Image)
+    ApiPost("/register", data)
+      .then((res) => {
+        toast(res.data.message)
+        navigate("/login")
+      })
+      .catch((error) => toast("error occur"))
   }
+  useEffect(() => {
+    urlToObject(dummy, "avatar").then((res) => {
+      seImage(res)
+    })
+  }, [])
+
   return (
     <Container>
       <Card>

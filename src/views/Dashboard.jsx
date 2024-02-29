@@ -9,10 +9,11 @@ const Dashboard = () => {
     <CardContainer>
       <UserCard>
         <Figure className="front">
-          <img src="http://www.jboeijenga.nl/img/front.jpg" alt="front" />
+          <img src={currentUser.profile_image} alt="front" />
           <div className="caption">
             <H1>
-              <span>hello</span> {currentUser.firstName} {currentUser.lastName}
+              <span>hello</span> {currentUser.first_name}{" "}
+              {currentUser.last_name}
               <span> welcome to our Website</span>
             </H1>
           </div>

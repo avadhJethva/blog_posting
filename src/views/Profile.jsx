@@ -1,5 +1,5 @@
 import store from "store/Store"
-import React, { Fragment, useState } from "react"
+import React, { Fragment, useEffect, useState } from "react"
 import styled from "styled-components"
 import Button from "component/button/Button"
 import { Column50, Container, FormError, Row } from "../globalStyle"
@@ -10,6 +10,9 @@ import * as yup from "yup"
 import { setLoggedInUser, updateUsers } from "store/actions/auth"
 import { toast } from "react-toastify"
 import { useDispatch } from "react-redux"
+import { ApiGet, ApiPost } from "api"
+import { urlToObject } from "utils"
+import dummy from "assets/dummy.png"
 
 // Styled Components
 const ProfileContainer = styled.div`
@@ -59,10 +62,12 @@ const schema = yup.object().shape({
   lastName: yup.string().min(3).required("last name is Required Field"),
   city: yup.string().required("city is Required Field"),
   phone: yup.number().required("phone is Required Field"),
-  password: yup.string().required("password is Required Field"),
+  // password: yup.string().required("password is Required Field"),
+  Email: yup.string().email().required("Email is Required Field"),
 })
 const Profile = () => {
   const { users, currentUser } = store.getState().AuthReducer
+  const [Image, setImage] = useState(null)
   const dispatch = useDispatch()
   const [modal, setModal] = useState(false)
   const handleOnclose = () => {
@@ -73,21 +78,38 @@ const Profile = () => {
   }
 
   const handleSubmit = (value) => {
-    const data = [...users]
-    const i = data.findIndex((arr) => arr.Email === value.Email)
+    const data = new FormData()
+    data.append("first_name", value.firstName)
+    data.append("last_name", value.lastName)
+    data.append("city", value.city)
+    data.append("phone", value.phone)
+    data.append("email", value.Email)
+    data.append("profile_image", Image)
 
-    if (i !== -1) {
-      data[i] = { ...data[i], ...value }
-      localStorage.setItem("users", JSON.stringify(data))
-      localStorage.setItem("current-user", JSON.stringify(data[i]))
-      dispatch(updateUsers(data))
-      dispatch(setLoggedInUser(data[i]))
-      toast("user Updated successfully")
-      handleOnclose()
-    } else {
-      toast("email isn't exist")
-    }
+    ApiPost("/user", data)
+      .then((res) => {
+        const data = res.data.data
+        if (data) {
+          dispatch(setLoggedInUser(data))
+          localStorage.setItem("current-user", JSON.stringify(data))
+        }
+      })
+      .catch((e) => toast("error occur"))
   }
+
+  useEffect(() => {
+    ApiGet("/user")
+      .then((res) => {
+        const data = res.data.data
+        dispatch(setLoggedInUser(data))
+        localStorage.setItem("current-user", JSON.stringify(data))
+      })
+      .catch((e) => toast("error occur"))
+    urlToObject(dummy, "avatar").then((res) => {
+      setImage(res)
+    })
+  }, [])
+
   return (
     <Fragment>
       <ProfileContainer>
@@ -95,14 +117,11 @@ const Profile = () => {
           <Button className="absolute-btn rigth w-auto" onClick={openModal}>
             Edit Profile
           </Button>
-          <Avatar
-            src={"http://www.jboeijenga.nl/img/front.jpg"}
-            alt="Profile Avatar"
-          />
+          <Avatar src={currentUser.profile_image} alt="Profile Avatar" />
           <UserName>
-            {currentUser.firstName} {currentUser.lastName}
+            {currentUser.first_name} {currentUser.last_name}
           </UserName>
-          <Role>Email : {currentUser.Email}</Role>
+          <Role>Email : {currentUser.email}</Role>
           <Role>City : {currentUser.city}</Role>
           <Bio>Phone: {currentUser.phone}</Bio>
         </ProfileCard>
@@ -112,12 +131,11 @@ const Profile = () => {
         <h3>edit Profile</h3>
         <Formik
           initialValues={{
-            firstName: currentUser.firstName,
-            lastName: currentUser.lastName,
+            firstName: currentUser.first_name,
+            lastName: currentUser.last_name,
             city: currentUser.city,
             phone: currentUser.phone,
-            password: currentUser.newPassword,
-            Email: currentUser.Email,
+            Email: currentUser.email,
           }}
           onSubmit={handleSubmit}
           validationSchema={schema}
@@ -197,12 +215,12 @@ const Profile = () => {
                       htmlFor="email"
                       label="Email"
                       type="email"
-                      defaultValue={values.Email}
-                      disabled
+                      value={values.Email}
+                      onChange={(e) => setFieldValue("Email", e.target.value)}
                     />
                   </Column50>
                   <Column50>
-                    <Input
+                    {/* <Input
                       htmlFor="password"
                       label="Password"
                       type="password"
@@ -212,10 +230,10 @@ const Profile = () => {
                         setFieldValue("password", e.target.value)
                       }
                       value={values.password}
-                    />
-                    <FormError>
+                    /> */}
+                    {/* <FormError>
                       <ErrorMessage name="password" />
-                    </FormError>
+                    </FormError> */}
                   </Column50>
                 </Row>
                 <Button type="submit">Update </Button>
